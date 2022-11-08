@@ -1,0 +1,11 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+    <f:be.pageRenderer includeRequireJsModules="{0: 'TYPO3/CMS/Webauthn/Auth'}" />
+
+    <input type="hidden" name="credentialId" id="credentialId" />
+
+    <p class="mb-4">Authenticate against known devices</p>
+
+    <div class="alert alert-danger hide" id="webauthnFailure">
+        Authentication failed. Please check if a registered device is used.
+    </div>
+</html>

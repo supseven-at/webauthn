@@ -1,0 +1,35 @@
+{
+  "name": "supseven/webauthn",
+  "license": "GPL-2.0-or-later",
+  "description": "Webauthn provider for MFA login in TYPO3 v11+",
+  "type": "typo3-cms-extension",
+  "require": {
+    "php": "^8.1",
+    "ext-fileinfo": "*",
+    "psr/http-message": "^1.0",
+    "typo3/cms-backend": "^11.5",
+    "typo3/cms-core": "^11.5",
+    "typo3/cms-frontend": "^11.5",
+    "typo3/cms-fluid": "^11.5",
+    "web-auth/webauthn-lib": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Supseven\\Webauthn\\": "src"
+    }
+  },
+  "extra": {
+    "typo3/cms": {
+      "extension-key": "webauthn"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "typo3/class-alias-loader": false,
+      "typo3/cms-composer-installers": false
+    }
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.11"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "typo3-webautn",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "prettier": "^2.7.1"
+  }
+}
