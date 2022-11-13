@@ -3,12 +3,9 @@ require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony'], function (
         const form = document.querySelector('#mfaController');
 
         try {
-            const resp = await ceremony.login(
-                TYPO3.settings.ajaxUrls.webauthn_auth_options,
-                TYPO3.settings.ajaxUrls.webauthn_auth_verify
-            );
-            document.querySelector('#credentialId').value = resp.id;
-            document.querySelector('#mfaController').submit();
+            const options = JSON.parse(form.querySelector('[data-auth-options]').dataset.authOptions);
+            form.querySelector('#credential').value = await ceremony.login(options);
+            form.submit();
         } catch (e) {
             console.error(e);
             form.querySelector('#webauthnFailure').classList.remove('hide');
@@ -17,6 +14,7 @@ require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony'], function (
 
     helper.init(async function () {
         document.querySelectorAll('#mfaController [type=submit]').forEach((el) => {
+            // Workaround for .submit() not working because the button has a name=submit attribute
             el.name = 'btnSubmit';
             el.addEventListener('click', async (ev) => {
                 ev.preventDefault();

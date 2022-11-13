@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Supseven\Webauthn;
 
-use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialSourceRepository;
 use Webauthn\PublicKeyCredentialUserEntity;
@@ -20,17 +17,6 @@ class CredentialsRepository implements PublicKeyCredentialSourceRepository
     public function __construct(
         private readonly MfaProviderPropertyManager $propertyManager
     ) {
-    }
-
-    public static function createForUser(FrontendUserAuthentication|BackendUserAuthentication $user): self
-    {
-        $propertyManager = GeneralUtility::makeInstance(
-            MfaProviderPropertyManager::class,
-            $user,
-            'webauthn'
-        );
-
-        return new self($propertyManager);
     }
 
     public function findOneByCredentialId(string $publicKeyCredentialId): ?PublicKeyCredentialSource
@@ -57,32 +43,25 @@ class CredentialsRepository implements PublicKeyCredentialSourceRepository
         $credentials[bin2hex($publicKeyCredentialSource->getPublicKeyCredentialId())] = [
             'data' => $publicKeyCredentialSource->jsonSerialize(),
         ];
-        $this->saveCredentials($credentials, false);
+        $this->propertyManager->updateProperties(['credentials' => $credentials]);
     }
 
-    public function saveNamedCredentialSource(string $name, PublicKeyCredentialSource $publicKeyCredentialSource, bool $createIfNone = false): void
+    public function saveNamedCredentialSource(string $name, PublicKeyCredentialSource $publicKeyCredentialSource): void
     {
         $credentials = $this->propertyManager->getProperty('credentials', []);
+
+        foreach ($credentials as $credential) {
+            if ($credential['name'] === $name) {
+                throw new \InvalidArgumentException(sprintf('Credential "%s" already exists', $name));
+            }
+        }
+
         $credentials[bin2hex($publicKeyCredentialSource->getPublicKeyCredentialId())] = [
             'name' => $name,
             'data' => $publicKeyCredentialSource->jsonSerialize(),
         ];
 
-        $this->saveCredentials($credentials, $createIfNone);
-    }
-
-    /**
-     * @param mixed $credentials
-     */
-    protected function saveCredentials(mixed $credentials, bool $createIfNone): void
-    {
-        try {
-            $this->propertyManager->updateProperties(['credentials' => $credentials]);
-        } catch (\Throwable) {
-            if ($createIfNone) {
-                $this->propertyManager->createProviderEntry(['credentials' => $credentials, 'active' => true]);
-            }
-        }
+        $this->propertyManager->updateProperties(['credentials' => $credentials]);
     }
 
     /**

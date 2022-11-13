@@ -7,13 +7,6 @@ services:
   Supseven\Webauthn\CredentialsService:
     shared: true
 
-  Supseven\Webauthn\CredentialsRepository:
-    shared: true
-
-  Supseven\Webauthn\BackendAjaxRequestHandler:
-    shared: true
-    public: true
-
   Supseven\Webauthn\WebauthnMfaProvider:
     shared: true
     public: true

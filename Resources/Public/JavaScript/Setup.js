@@ -4,20 +4,19 @@ require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony', 'TYPO3/CMS/
     notify
 ) {
     helper.init(() => {
+        const wrapper = document.querySelector('#addWebauthnForm');
+
         if (!helper.detectWebAuthnSupport()) {
-            document.querySelector('#addWebauthnForm').style.display = 'none';
+            wrapper.style.display = 'none';
             return;
         }
 
-        document.querySelectorAll('[data-toggle=addWebauthn]').forEach((el) => {
+        wrapper.querySelectorAll('[data-toggle=addWebauthn]').forEach((el) => {
             el.addEventListener('click', async () => {
                 try {
+                    const opts = JSON.parse(wrapper.dataset.creationOptions);
                     const form = el.closest('form');
-                    await ceremony.register(
-                        form.querySelector('#deviceName').value,
-                        TYPO3.settings.ajaxUrls.webauthn_register_options,
-                        TYPO3.settings.ajaxUrls.webauthn_register_save
-                    );
+                    form.querySelector('#credential').value = await ceremony.register(opts);
                     form.submit();
                 } catch (e) {
                     console.error(e);

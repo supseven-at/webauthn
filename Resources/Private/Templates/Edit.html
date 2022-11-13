@@ -6,12 +6,10 @@
     <f:be.pageRenderer includeRequireJsModules="{0: 'TYPO3/CMS/Webauthn/Edit'}" />
 
     <input type="hidden" name="updateAction" id="updateAction" value="save" />
-    <input type="hidden" name="credential" id="credentialKey" value="" />
-    <input type="hidden" name="credentialId" id="credentialId" value="" />
-    <input type="hidden" name="publicKey" id="publicKey" value="" />
+    <input type="hidden" name="credential" id="credential" value="" />
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col col-md-2">
             <div class="table-fit">
                 <table class="table">
                     <thead>
@@ -26,25 +24,27 @@
                                     <input
                                         class="form-control"
                                         type="text"
-                                        name="name[{credential.id}]"
+                                        name="newNames[{credential.id}]"
                                         value="{credential.name -> f:format.htmlspecialchars()}"
                                     />
                                 </td>
                                 <td width="1">
                                     <f:if condition="{allowDelete}">
-                                        <f:then
-                                            ><button
+                                        <f:then>
+                                            <button
                                                 type="button"
                                                 class="btn btn-sm btn-danger"
                                                 data-toggle="deleteWebauthn"
                                                 data-webauthn-id="{credential.id}"
                                             >
-                                                <c:icon identifier="actions-delete" /></button
-                                        ></f:then>
-                                        <f:else
-                                            ><button disabled type="button" class="btn btn-sm btn-danger disabled">
-                                                <c:icon identifier="actions-delete" /></button
-                                        ></f:else>
+                                                <c:icon identifier="actions-delete" />
+                                            </button>
+                                        </f:then>
+                                        <f:else>
+                                            <button disabled type="button" class="btn btn-sm btn-danger disabled">
+                                                <c:icon identifier="actions-delete" />
+                                            </button>
+                                        </f:else>
                                     </f:if>
                                 </td>
                             </tr>
@@ -63,7 +63,7 @@
                                 <input
                                     class="form-control"
                                     type="text"
-                                    name="newName"
+                                    name="name"
                                     id="newName"
                                     value="Device {nextDevice}"
                                     placeholder="Device Name"
@@ -72,9 +72,9 @@
                             <td width="1">
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-primary"
+                                    class="btn btn-sm btn-success"
                                     data-toggle="addWebauthn"
-                                    data-id="{credential.id}"
+                                    data-creation-options="{credentailCreationOptions -> f:format.json() -> f:format.htmlspecialchars()}"
                                 >
                                     <c:icon identifier="actions-add" />
                                 </button>

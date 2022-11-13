@@ -11,12 +11,10 @@ require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony', 'TYPO3/CMS/
                 nameField.required = false;
 
                 if (nameField.value.replace(/\s+/g, '') !== '') {
-                    await Ceremony.register(
-                        nameField.value,
-                        TYPO3.settings.ajaxUrls.webauthn_register_options,
-                        TYPO3.settings.ajaxUrls.webauthn_register_save
-                    );
-                    location.reload();
+                    const opts = JSON.parse(el.dataset.creationOptions);
+                    form.querySelector('#credential').value = await Ceremony.register(opts);
+                    form.querySelector('#updateAction').value = 'add';
+                    form.submit();
                 } else {
                     nameField.value = '';
                     nameField.required = true;

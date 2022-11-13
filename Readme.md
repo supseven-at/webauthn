@@ -3,7 +3,7 @@
 This is a TYPO3 CMS extension to provide Webauthn support for
 multi-factor-authentication in the backend. It is compatible with every
 browser and device supporting the Webauthn specification. When using a
-Chromium based browser or Firefox, those include hardware dongles/key,
+Chromium based browser or Firefox, those include hardware dongles/keys,
 Android smartphones as well as Webauthn compatible system authentications like
 Windows Hello, using biometric data like fingerprints, and/or Active Directory.
 
@@ -20,6 +20,9 @@ Older TYPO3 versions are not supported.
 
 ## Configuration
 
+The following options are a quick overview. For detailed explanations see
+the folder [Documention](./Documentation)
+
 ### Base setup
 
 To (optionally) set webauthn as the default MFA method, add this line to the
@@ -32,7 +35,9 @@ $GLOBALS['TYPO3_CONF_VARS']['BE']['recommendedMfaProvider'] = 'webauthn';
 ### Extension configuration
 
 The following configuration values in the `$GLOBALS['TYPO3_CONF_VARS']`
-array are available (all optional!):
+array are available (all optional!). If they are actually used or displayed
+depends on the webauthn device being used, eg.: a simple security key cannot
+show the name or icon.
 
 `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['webauthn']['name']`: String
 with the name of the TYPO3 installation. Defaults to to the value of
@@ -61,8 +66,9 @@ displayed, otherwise the "username" will be used.
 
 ## License
 
-The extension is licensed under the GPLv2 or later. See [LICENSE](./LICENSE)
-or <https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt>.
+The software is licensed under the GPLv2 or, at your options, a later
+version of this license. See [LICENSE](./LICENSE) or
+<https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt>.
 
 The icon is the official webauthn icon, provided by the
 [bootstrap icons](https://icons.getbootstrap.com/)
@@ -73,6 +79,8 @@ Includes the [cbor-js](https://github.com/paroga/cbor-js) library, licensed
 under the MIT license. See
 <https://github.com/paroga/cbor-js/blob/master/LICENSE> for details.
 
-Uses the [webauth-lib](https://webauthn-doc.spomky-labs.com/) library,
+Uses the [webauth-lib](https://webauthn-doc.spomky-labs.com/) library, and
+adapted code from
+[webauthn-helper](https://github.com/web-auth/webauthn-helper)
 licensed under the MIT license, see
 <https://github.com/web-auth/webauthn-lib> for details.

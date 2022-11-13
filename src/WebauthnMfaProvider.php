@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderInterface;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
+use TYPO3\CMS\Core\Authentication\Mfa\MfaViewType;
 use TYPO3\CMS\Core\Http\HtmlResponse;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
@@ -44,11 +45,7 @@ class WebauthnMfaProvider implements MfaProviderInterface
 
     public function verify(Request $request, MfaProviderPropertyManager $propertyManager): bool
     {
-        $sentId = ($request->getQueryParams()['credentialId'] ?? $request->getParsedBody()['credentialId'] ?? '');
-        $storedId = $GLOBALS['BE_USER']->getSessionData('tx_webauthn_verified');
-        $GLOBALS['BE_USER']->setAndSaveSessionData('tx_webauthn_verified', null);
-
-        return $storedId && $sentId && $storedId === $sentId;
+        return $this->credentialsService->verifyAuth($request, $GLOBALS['BE_USER'], $propertyManager);
     }
 
     public function handleRequest(Request $request, MfaProviderPropertyManager $propertyManager, string $type): Response
@@ -60,8 +57,15 @@ class WebauthnMfaProvider implements MfaProviderInterface
         $template->setTemplate(ucfirst($type));
 
         switch ($type) {
-            case 'edit':
+            case MfaViewType::SETUP:
+                $options = $this->credentialsService->createCredentialCreationOptions($GLOBALS['BE_USER'], $propertyManager);
+                $template->assign('credentailCreationOptions', $options->jsonSerialize());
+                $template->assign('deviceName', $request->getParsedBody()['name'] ?? null);
+                break;
+
+            case MfaViewType::EDIT:
                 $credentials = [];
+                $options = $this->credentialsService->createCredentialCreationOptions($GLOBALS['BE_USER'], $propertyManager);
 
                 foreach ($propertyManager->getProperty('credentials', []) as $key => $credential) {
                     $credentials[] = [
@@ -70,9 +74,16 @@ class WebauthnMfaProvider implements MfaProviderInterface
                     ];
                 }
 
+                $template->assign('credentailCreationOptions', $options->jsonSerialize());
                 $template->assign('credentials', $credentials);
                 $template->assign('allowDelete', count($credentials) > 1);
                 $template->assign('nextDevice', count($credentials) + 1);
+                $template->assign('nextDeviceName', $request->getParsedBody()['name'] ?? null);
+                break;
+
+            case MfaViewType::AUTH:
+                $options = $this->credentialsService->createCredentialRequestOptions($GLOBALS['BE_USER'], $propertyManager);
+                $template->assign('credentailAuthOptions', $options->jsonSerialize());
                 break;
         }
 
@@ -84,13 +95,14 @@ class WebauthnMfaProvider implements MfaProviderInterface
 
     public function activate(Request $request, MfaProviderPropertyManager $propertyManager): bool
     {
-        if ($propertyManager->hasProviderEntry()) {
-            $propertyManager->updateProperties(['active' => true]);
-        } else {
-            $propertyManager->createProviderEntry(['active' => true]);
+        $propertyManager->createProviderEntry(['active' => true, 'credentials' => []]);
+        $success = $this->credentialsService->saveCredentails($request, $GLOBALS['BE_USER'], $propertyManager);
+
+        if (!$success) {
+            $propertyManager->deleteProviderEntry();
         }
 
-        return true;
+        return $success;
     }
 
     public function deactivate(Request $request, MfaProviderPropertyManager $propertyManager): bool
@@ -131,13 +143,13 @@ class WebauthnMfaProvider implements MfaProviderInterface
 
                 // Add a new credential
             case 'add':
-                break;
+                return $this->credentialsService->saveCredentails($request, $GLOBALS['BE_USER'], $propertyManager);
 
                 // Update names
             default:
                 $credentials = $propertyManager->getProperty('credentials', []);
 
-                foreach ($params['name'] as $key => $name) {
+                foreach ($params['newNames'] ?? [] as $key => $name) {
                     if (isset($credentials[$key]) && is_array($credentials[$key]) && trim($name) !== '') {
                         $credentials[$key]['name'] = $name;
                     }

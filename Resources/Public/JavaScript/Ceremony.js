@@ -99,46 +99,17 @@ define('TYPO3/CMS/Webauthn/Ceremony', function () {
     };
 
     return {
-        register: async function (deviceName, optionsUrl, registerUrl) {
-            const optionsResponse = await send(optionsUrl);
-            const json = await optionsResponse.json();
-            const publicKey = preparePublicKeyOptions(json);
+        register: async function (options) {
+            const publicKey = preparePublicKeyOptions(options);
             const credentials = await navigator.credentials.create({ publicKey });
             const publicKeyCredential = preparePublicKeyCredentials(credentials);
 
-            if (registerUrl.includes('?')) {
-                registerUrl += '&';
-            } else {
-                registerUrl += '?';
-            }
-
-            registerUrl += 'deviceName=' + encodeURIComponent(deviceName);
-
-            const resp = await send(registerUrl, JSON.stringify(publicKeyCredential));
-
-            if (!resp.ok) {
-                throw resp;
-            }
-
-            const data = await resp.text();
-
-            return data !== '' ? JSON.parse(data) : data;
+            return JSON.stringify(publicKeyCredential);
         },
-        login: async function (optionsUrl, loginUrl) {
-            const optionsResponse = await send(optionsUrl);
-            const json = await optionsResponse.json();
-            const publicKey = preparePublicKeyOptions(json);
+        login: async function (options) {
+            const publicKey = preparePublicKeyOptions(options);
             const credentials = await navigator.credentials.get({ publicKey });
-            const publicKeyCredential = preparePublicKeyCredentials(credentials);
-            const actionResponse = await send(loginUrl, JSON.stringify(publicKeyCredential));
-
-            if (!actionResponse.ok) {
-                throw actionResponse;
-            }
-
-            const responseBody = await actionResponse.text();
-
-            return responseBody !== '' ? JSON.parse(responseBody) : responseBody;
+            return JSON.stringify(preparePublicKeyCredentials(credentials));
         },
     };
 });
