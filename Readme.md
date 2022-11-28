@@ -3,9 +3,10 @@
 This is a TYPO3 CMS extension to provide Webauthn support for
 multi-factor-authentication in the backend. It is compatible with every
 browser and device supporting the Webauthn specification. When using a
-Chromium based browser or Firefox, those include hardware dongles/keys,
-Android smartphones as well as Webauthn compatible system authentications like
-Windows Hello, using biometric data like fingerprints, and/or Active Directory.
+Chromium based browser, Firefox or Safari, those include hardware
+dongles/keys, Android smartphones as well as Webauthn compatible system
+authentications like Windows Hello, using biometric data like fingerprints,
+and/or Active Directory.
 
 ## Installation
 
@@ -20,17 +21,19 @@ Older TYPO3 versions are not supported.
 
 ## Configuration
 
-The following options are a quick overview. For detailed explanations see
-the folder [Documention](./Documentation)
+All the following configuration settings are optional. Available options as
+well as their default values, if not explicitly set, are listed below.
 
 ### Base setup
 
-To (optionally) set webauthn as the default MFA method, add this line to the
+To set webauthn as the default MFA method, add this line to the
 TYPO3 setup, eg. in the AdditionalConfiguration.php file:
 
 ```php
 $GLOBALS['TYPO3_CONF_VARS']['BE']['recommendedMfaProvider'] = 'webauthn';
 ```
+
+Other providers still work, webauthn does not interfere with any of them.
 
 ### Extension configuration
 
@@ -53,8 +56,9 @@ registerd with.
 `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['webauthn']['icon']`: String
 with a path to an icon. If none is set, webauth will try the value of the
 setting `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['backend']['loginLogo']`.
+No icon will be used if neither settings are set.
 If the icon is actually displayed, depends on the device capabilties, eg.:
-a dongle without a display will not show it, a smartphone might.
+a dongle without a display cannot show it, a smartphone might.
 
 ### User configuration
 
