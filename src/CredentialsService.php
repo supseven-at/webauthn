@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use Webauthn\AuthenticatorSelectionCriteria;
 use Webauthn\PublicKeyCredentialCreationOptions;
@@ -157,17 +158,10 @@ class CredentialsService
         $appIcon = (string)($extConf['icon'] ?? $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['backend']['loginLogo'] ?? '');
 
         if ($appIcon) {
-            $appIconFile = GeneralUtility::getFileAbsFileName($appIcon);
+            $appIconPath = PathUtility::getAbsoluteWebPath($appIcon);
 
-            if ($appIconFile && file_exists($appIconFile) && !is_dir($appIconFile)) {
-                $appIconMimeType = mime_content_type($appIconFile);
-                $appIconContent = file_get_contents($appIconFile);
-
-                if ($appIconMimeType && $appIconContent) {
-                    $appIcon = 'data:' . $appIconMimeType . ';base64,' . base64_encode($appIconContent);
-                } else {
-                    throw new \ValueError('Cannot read or identify app icon');
-                }
+            if ($appIconPath) {
+                $appIcon = GeneralUtility::locationHeaderUrl($appIconPath);
             } else {
                 throw new \ValueError('App icon path cannot be resolved');
             }
