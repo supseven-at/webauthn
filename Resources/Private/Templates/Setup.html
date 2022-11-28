@@ -17,11 +17,10 @@
             ><f:if condition="{deviceName}">
                 <f:then>{deviceName}</f:then>
                 <f:else
-                    >{f:translate(key:
-                    'LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:setup.deviceName.value')}</f:else
-                >
-            </f:if></f:variable
-        >
+                    ><f:translate
+                        key="LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:setup.deviceName.value"
+                /></f:else> </f:if
+        ></f:variable>
         <div class="col col-md-1">
             <div class="mt-3">
                 <div class="form-control-wrap mt-1">

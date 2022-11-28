@@ -1,8 +1,4 @@
-require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony', 'TYPO3/CMS/Backend/Notification'], function (
-    helper,
-    Ceremony,
-    notify
-) {
+require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony'], function (helper, Ceremony) {
     helper.init(() => {
         document.querySelectorAll('[data-toggle=addWebauthn]').forEach((el) => {
             el.addEventListener('click', async () => {
@@ -33,7 +29,7 @@ require(['TYPO3/CMS/Webauthn/Helper', 'TYPO3/CMS/Webauthn/Ceremony', 'TYPO3/CMS/
                     const form = el.closest('form');
 
                     form.querySelector('#updateAction').value = 'remove';
-                    form.querySelector('#credentialKey').value = el.dataset.webauthnId;
+                    form.querySelector('#credential').value = el.dataset.webauthnId;
 
                     form.submit();
                 }

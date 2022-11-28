@@ -14,7 +14,11 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th colspan="2">Saved credentials</th>
+                            <th colspan="2">
+                                <f:translate
+                                    key="LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:edit.saved"
+                                />
+                            </th>
                         </tr>
                     </thead>
                     <tbody id="saveCredentailsList">
@@ -51,10 +55,20 @@
                         </f:for>
                     </tbody>
                 </table>
+                <f:variable name="nextName"
+                    ><f:translate
+                        key="LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:edit.newName"
+                        arguments="{0: nextDevice}"
+                /></f:variable>
+                <f:variable name="nextLabel"
+                    ><f:translate key="LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:edit.newLabel"
+                /></f:variable>
                 <table class="table">
                     <thead>
                         <tr>
-                            <th colspan="2">Add credential</th>
+                            <th colspan="2">
+                                <f:translate key="LLL:EXT:webauthn/Resources/Private/Language/locallang.xlf:edit.add" />
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,8 +79,8 @@
                                     type="text"
                                     name="name"
                                     id="newName"
-                                    value="Device {nextDevice}"
-                                    placeholder="Device Name"
+                                    value="{nextName}"
+                                    placeholder="{nextLabel}"
                                 />
                             </td>
                             <td width="1">

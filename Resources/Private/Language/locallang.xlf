@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2" xmlns:t3="http://typo3.org/schemas/xliff" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-	<file source-language="en" original="" datatype="plaintext" date="2022-11-08T13:57:03+01:00">
+	<file source-language="en" original="" datatype="plaintext" date="2022-11-28T16:34:21+01:00">
 		<body>
 			<trans-unit id="provider.description" resname="provider.description">
 				<source>Use webauthn compatible devices like smart phones, fingerprint sensors or security keys to authenticate.</source>
@@ -19,6 +19,21 @@
 			</trans-unit>
 			<trans-unit id="setup.error.registerFailed" resname="setup.error.registerFailed">
 				<source>Registration failed or was aborted.</source>
+			</trans-unit>
+			<trans-unit id="auth.register" resname="auth.register">
+				<source>Confirm with a registered device.</source>
+			</trans-unit>
+			<trans-unit id="edit.saved" resname="edit.saved">
+				<source>Saved devices</source>
+			</trans-unit>
+			<trans-unit id="edit.saved" resname="edit.saved">
+				<source>Add new device</source>
+			</trans-unit>
+			<trans-unit id="edit.newName" resname="edit.newName">
+				<source>Device %s</source>
+			</trans-unit>
+			<trans-unit id="edit.newLabel" resname="edit.newLabel">
+				<source>New device name</source>
 			</trans-unit>
 		</body>
 	</file>

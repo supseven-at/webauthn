@@ -17,23 +17,6 @@ define('TYPO3/CMS/Webauthn/Ceremony', function () {
 
     const arrayToBase64String = (a) => btoa(String.fromCharCode(...a));
 
-    const send = async (url, data) => {
-        const opts = {
-            credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-            },
-        };
-
-        if (data) {
-            opts.method = 'POST';
-            opts.body = data;
-        }
-
-        return fetch(url, opts);
-    };
-
     const preparePublicKeyOptions = (publicKey) => {
         publicKey.challenge = Uint8Array.from(base64UrlDecode(publicKey.challenge), (c) => c.charCodeAt(0));
 
