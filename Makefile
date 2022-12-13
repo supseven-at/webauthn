@@ -21,7 +21,7 @@ clean: ## Remove built files and dependencies
 	rm -rf node_modules vendor .php-cs-fixer-cache
 
 .PHONY: release
-release: release/webauthn.zip release/changelog.txt release/ter_notes.txt ## Create release artifact
+release: release/webauthn.zip release/changelog.md release/ter_notes.md ## Create release artifact
 
 ##
 ## Sub targets called by entry points
@@ -43,13 +43,13 @@ fix-php: vendor/autoload.php ## Fix PHP code style
 fix-frontend: node_modules/.yarn-integrity ## Fix frontend code style
 	./node_modules/.bin/prettier --write . '!vendor' '!composer.lock'
 
-release/changelog.txt:
+release/changelog.md:
 	mkdir -p release
-	git log --format='* %h %s' $(PREV_VERSION)..$(RELEASE_VERSION) > release/changelog.txt
+	git log --format='* %h %s' $(PREV_VERSION)..$(RELEASE_VERSION) > release/changelog.md
 
-release/ter_notes.txt:
+release/ter_notes.md:
 	mkdir -p release
-	git log --format='* %s' $(PREV_VERSION)..$(RELEASE_VERSION) | sed -r 's/\[\S+\] //' > release/ter_notes.txt
+	git log --format='* %s' $(PREV_VERSION)..$(RELEASE_VERSION) | sed -r 's/\[\S+\] //' > release/ter_notes.md
 
 
 release/webauthn.zip:
