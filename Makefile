@@ -51,9 +51,11 @@ release/ter_notes.txt:
 	mkdir -p release
 	git log --format='* %s' $(PREV_VERSION)..$(RELEASE_VERSION) | sed -r 's/\[\S+\] //' > release/ter_notes.txt
 
+
 release/webauthn.zip:
-	mkdir -p release
-	zip release/webauthn.zip Configuration Resources src composer.json ext_emconf.php LICENSE Readme.md
+	mkdir -p release/webauthn
+	cp -a Configuration Resources src composer.json ext_emconf.php LICENSE Readme.md release/webauthn
+	cd release && zip -r webauthn.zip webauthn
 
 ##
 ## Dependencies of targets
