@@ -51,7 +51,6 @@ release/ter_notes.md:
 	mkdir -p release
 	git log --format='* %s' $(PREV_VERSION)..$(RELEASE_VERSION) | sed -r 's/\[\S+\] //' > release/ter_notes.md
 
-
 release/webauthn.zip:
 	mkdir -p release/webauthn
 	cp -a Configuration Resources src composer.json ext_emconf.php LICENSE Readme.md release/webauthn
