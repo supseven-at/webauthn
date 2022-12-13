@@ -26,6 +26,7 @@ class CredentialsRepository implements PublicKeyCredentialSourceRepository
         foreach ($this->loadCredentials() as $credential) {
             if ($credential->getPublicKeyCredentialId() === $publicKeyCredentialId) {
                 $result = $credential;
+                break;
             }
         }
 

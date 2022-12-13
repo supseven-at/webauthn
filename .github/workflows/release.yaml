@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release-ter:
+    name: Release Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.1
+          extensions: intl, mbstring, json, zip, curl
+          tools: composer:v2, typo3/tailor, clue/phar-composer
+
+      - name: Set version output
+        id: vars
+        run: |
+          v=${GITHUB_REF#refs/tags/v}
+          echo ::set-output name=version::${v}
+          echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+
+      - name: Create artifact
+        run: |
+          php ~/.composer/vendor/bin/tailor set-version "${{ steps.vars.outputs.version }}"
+          make release RELEASE_VERSION=${{ steps.vars.outputs.tag }}
+
+      - name: Create github release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ steps.vars.outputs.tag }}
+          body_path: release/changelog.txt
+          files: |
+            release/webauthn.zip
+
+      - name: Create TER release
+        env:
+          TYPO3_EXTENSION_KEY: webauthn
+          TYPO3_API_TOKEN: ${{ secrets.TYPO3_API_TOKEN }}
+        run: |
+          php ~/.composer/vendor/bin/tailor ter:publish webauthn ${{ steps.vars.outputs.version }} \
+            --artefact=release/webauthn.zip \
+            --comment="$(cat release/ter_notes.txt)"

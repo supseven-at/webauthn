@@ -6,6 +6,7 @@ use Symfony\Component\Finder\Finder;
 
 $finder = Finder::create()
     ->name('/\\.php$/')
+    ->in(__DIR__ . '/.github')
     ->in(__DIR__ . '/src')
     ->in(__DIR__ . '/Configuration');
 

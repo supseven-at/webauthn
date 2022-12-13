@@ -128,7 +128,7 @@ class CredentialsService
 
             return true;
         } catch (\Throwable $ex) {
-            $this->logger->error('Cannot verify request: ' . $ex->getMessage(), [$ex]);
+            $this->logger->warning('Cannot verify request: ' . $ex->getMessage(), [$ex]);
         }
 
         return false;
