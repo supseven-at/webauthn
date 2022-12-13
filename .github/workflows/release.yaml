@@ -28,7 +28,6 @@ jobs:
 
       - name: Create artifact
         run: |
-          php ~/.composer/vendor/bin/tailor set-version "${{ steps.vars.outputs.version }}"
           make release RELEASE_VERSION=${{ steps.vars.outputs.tag }}
 
       - name: Create github release

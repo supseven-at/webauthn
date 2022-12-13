@@ -54,6 +54,7 @@ release/ter_notes.md:
 release/webauthn.zip:
 	mkdir -p release/webauthn
 	cp -a Configuration Resources src composer.json ext_emconf.php LICENSE Readme.md release/webauthn
+	php .github/helper/set-version.php $(RELEASE_VERSION) release/webauthn
 	cd release && zip -r webauthn.zip webauthn
 
 ##
