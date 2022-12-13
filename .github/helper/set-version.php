@@ -10,7 +10,7 @@ function err(string $msg): void
     exit(1);
 }
 
-if (!is_string($version) || !preg_match('/^v?\d+\.\d+\.\d+$/', $version)) {
+if (!is_string($version) || !preg_match('/^v?\\d+\\.\\d+\\.\\d+$/', $version)) {
     err('Invalid version');
 }
 
@@ -24,13 +24,13 @@ if (!is_file($path . 'ext_emconf.php')) {
 }
 
 $content = file_get_contents($path . 'ext_emconf.php');
-$content = preg_replace('/(\'version\'\s*=>\s*)\'\d\.\d\.\d/', '\1\'' . $version, $content);
+$content = preg_replace('/(\'version\'\\s*=>\\s*)\'\\d\\.\\d\\.\\d/', '\\1\'' . $version, $content);
 
 file_put_contents($path . 'ext_emconf.php', $content);
 
 if (is_file($path . 'Documentation/Settings.cfg')) {
     $content = file_get_contents($path . 'Documentation/Settings.cfg');
-    $content = preg_replace('/((?:version|release)\s*=)\s*\d\.\d\.\d/', '\1 ' . $version, $content);
+    $content = preg_replace('/((?:version|release)\\s*=)\\s*\\d\\.\\d\\.\\d/', '\\1 ' . $version, $content);
 
     file_put_contents($path . 'Documentation/Settings.cfg', $content);
 }

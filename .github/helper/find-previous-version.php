@@ -37,4 +37,4 @@ foreach (explode("\n", $versions) as $v) {
     }
 }
 
-fwrite(STDOUT, $previous);
+fwrite(STDOUT, $previous ?? '');
