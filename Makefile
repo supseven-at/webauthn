@@ -1,5 +1,5 @@
 
-RELEASE_VERSION ?= $(git tag -l | sort -V | tail -n 1)
+RELEASE_VERSION ?= $(shell git tag -l | sort -V | tail -n 1)
 PREV_VERSION = $(shell php .github/helper/find-previous-version.php $(RELEASE_VERSION))
 
 .PHONY: help
