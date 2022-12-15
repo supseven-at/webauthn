@@ -95,6 +95,11 @@ class WebauthnMfaProvider implements MfaProviderInterface
 
     public function activate(Request $request, MfaProviderPropertyManager $propertyManager): bool
     {
+        // Reset properties
+        if ($propertyManager->hasProviderEntry()) {
+            $propertyManager->deleteProviderEntry();
+        }
+
         $propertyManager->createProviderEntry(['active' => true, 'credentials' => []]);
         $success = $this->credentialsService->saveCredentails($request, $GLOBALS['BE_USER'], $propertyManager);
 
