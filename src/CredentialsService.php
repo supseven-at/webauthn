@@ -4,6 +4,20 @@ declare(strict_types=1);
 
 namespace Supseven\Webauthn;
 
+use Cose\Algorithm\Manager as AlgorithmManager;
+use Cose\Algorithm\Signature\ECDSA\ES256;
+use Cose\Algorithm\Signature\ECDSA\ES256K;
+use Cose\Algorithm\Signature\ECDSA\ES384;
+use Cose\Algorithm\Signature\ECDSA\ES512;
+use Cose\Algorithm\Signature\EdDSA\Ed256;
+use Cose\Algorithm\Signature\EdDSA\Ed512;
+use Cose\Algorithm\Signature\RSA\PS256;
+use Cose\Algorithm\Signature\RSA\PS384;
+use Cose\Algorithm\Signature\RSA\PS512;
+use Cose\Algorithm\Signature\RSA\RS256;
+use Cose\Algorithm\Signature\RSA\RS384;
+use Cose\Algorithm\Signature\RSA\RS512;
+use Cose\Algorithms;
 use Psr\Http\Message\ServerRequestInterface as Reqest;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
@@ -11,48 +25,116 @@ use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
+use Webauthn\AttestationStatement\AndroidKeyAttestationStatementSupport;
+use Webauthn\AttestationStatement\AndroidSafetyNetAttestationStatementSupport;
+use Webauthn\AttestationStatement\AppleAttestationStatementSupport;
+use Webauthn\AttestationStatement\AttestationObjectLoader;
+use Webauthn\AttestationStatement\AttestationStatementSupportManager;
+use Webauthn\AttestationStatement\FidoU2FAttestationStatementSupport;
+use Webauthn\AttestationStatement\NoneAttestationStatementSupport;
+use Webauthn\AttestationStatement\PackedAttestationStatementSupport;
+use Webauthn\AttestationStatement\TPMAttestationStatementSupport;
+use Webauthn\AuthenticationExtensions\ExtensionOutputCheckerHandler;
+use Webauthn\AuthenticatorAssertionResponse;
+use Webauthn\AuthenticatorAssertionResponseValidator;
+use Webauthn\AuthenticatorAttestationResponse;
+use Webauthn\AuthenticatorAttestationResponseValidator;
 use Webauthn\AuthenticatorSelectionCriteria;
 use Webauthn\PublicKeyCredentialCreationOptions;
+use Webauthn\PublicKeyCredentialDescriptor;
+use Webauthn\PublicKeyCredentialLoader;
+use Webauthn\PublicKeyCredentialParameters;
 use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialUserEntity;
-use Webauthn\Server;
+use Webauthn\TokenBinding\IgnoreTokenBindingHandler;
 
 /**
+ * Service offering a single interface to all needed Webauthn objects and functions
+ *
  * @author Georg Großberger <g.grossberger@supseven.at>
  */
 class CredentialsService
 {
+    /**
+     * Internal instance of algorithm manager
+     *
+     * @var AlgorithmManager|null
+     */
+    private ?AlgorithmManager $algorithmManager = null;
+
+    /**
+     * Internal instance of the attestation manager
+     *
+     * @var AttestationStatementSupportManager|null
+     */
+    private ?AttestationStatementSupportManager $attestationStatementSupportManager = null;
+
     public function __construct(
         private readonly LoggerInterface $logger
     ) {
     }
 
+    /**
+     * Create options for registering a new device
+     *
+     * @param FrontendUserAuthentication|BackendUserAuthentication $login
+     * @param MfaProviderPropertyManager $propertyManager
+     * @return PublicKeyCredentialCreationOptions
+     */
     public function createCredentialCreationOptions(FrontendUserAuthentication|BackendUserAuthentication $login, MfaProviderPropertyManager $propertyManager): PublicKeyCredentialCreationOptions
     {
+        $publicKeyCredentialSourceRepository = new CredentialsRepository($propertyManager);
         $user = $this->createUser($login);
-        $repository = new CredentialsRepository($propertyManager);
+        $challenge = random_bytes(16);
+        $publicKeyCredentialParametersList = [
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ES256),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ES256K),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ES384),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ES512),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_RS256),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_RS384),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_RS512),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_PS256),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_PS384),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_PS512),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ED256),
+            PublicKeyCredentialParameters::create('public-key', Algorithms::COSE_ALGORITHM_ED512),
+        ];
 
-        $excludeCredentials = array_map(
-            fn (PublicKeyCredentialSource $credential) => $credential->getPublicKeyCredentialDescriptor(),
-            $repository->findAllForUserEntity($user)
-        );
+        $authenticatorSelectionCriteria = AuthenticatorSelectionCriteria::create()
+            // Do not let the browser ask for a pin before the actual device is contacted
+            ->setUserVerification(AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_DISCOURAGED)
+            // Allow all types of key attachments
+            ->setAuthenticatorAttachment(AuthenticatorSelectionCriteria::AUTHENTICATOR_ATTACHMENT_NO_PREFERENCE);
 
-        $options = $this->createServer($repository)->generatePublicKeyCredentialCreationOptions(
+        $options = PublicKeyCredentialCreationOptions::create(
+            $this->createRelayingParty(),
             $user,
-            PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE,
-            $excludeCredentials
-        );
+            $challenge,
+            $publicKeyCredentialParametersList,
+        )
+            ->setAuthenticatorSelection($authenticatorSelectionCriteria)
+            ->setAttestation(PublicKeyCredentialCreationOptions::ATTESTATION_CONVEYANCE_PREFERENCE_NONE);
 
-        $options->getAuthenticatorSelection()->setUserVerification(AuthenticatorSelectionCriteria::USER_VERIFICATION_REQUIREMENT_DISCOURAGED);
-        $options->getAuthenticatorSelection()->setAuthenticatorAttachment(AuthenticatorSelectionCriteria::AUTHENTICATOR_ATTACHMENT_CROSS_PLATFORM);
+        foreach ($publicKeyCredentialSourceRepository->findAllForUserEntity($user) as $credentialSource) {
+            $options->excludeCredential($credentialSource->getPublicKeyCredentialDescriptor());
+        }
 
         $login->setAndSaveSessionData('tx_webauthn_register', $options->jsonSerialize());
 
         return $options;
     }
 
+    /**
+     * Validate and save credentials of a new device
+     *
+     * @param Reqest $request
+     * @param FrontendUserAuthentication|BackendUserAuthentication $login
+     * @param MfaProviderPropertyManager $propertyManager
+     * @return bool
+     */
     public function saveCredentails(Reqest $request, FrontendUserAuthentication|BackendUserAuthentication $login, MfaProviderPropertyManager $propertyManager): bool
     {
         try {
@@ -63,19 +145,36 @@ class CredentialsService
                 return false;
             }
 
-            /** @var PublicKeyCredentialCreationOptions $options */
             $options = PublicKeyCredentialCreationOptions::createFromArray($login->getSessionData('tx_webauthn_register'));
-            $login->setAndSaveSessionData('tx_webauthn_register', null);
 
-            $repository = new CredentialsRepository($propertyManager);
+            $publicKeyCredentialSourceRepository = new CredentialsRepository($propertyManager);
+            $attestationStatementSupportManager = $this->getAttestationStatementSupportManager();
+            $publicKeyCredentialLoader = $this->getPublicKeyCredentailLoader();
+            $publicKeyCredentialLoader->setLogger($this->logger);
 
-            $publicKeyCredentialSource = $this->createServer($repository)->loadAndCheckAttestationResponse(
-                $credentials,
-                $options,
-                $request
+            $authenticatorAttestationResponseValidator = AuthenticatorAttestationResponseValidator::create(
+                $attestationStatementSupportManager,
+                $publicKeyCredentialSourceRepository,
+                null,
+                ExtensionOutputCheckerHandler::create()
             );
 
-            $repository->saveNamedCredentialSource(
+            $publicKeyCredential = $publicKeyCredentialLoader->load($credentials);
+            $authenticatorAttestationResponse = $publicKeyCredential->getResponse();
+
+            if (!$authenticatorAttestationResponse instanceof AuthenticatorAttestationResponse) {
+                throw new \UnexpectedValueException('Authenticator attestestation response not correctly loaded');
+            }
+
+            $publicKeyCredentialSource = $authenticatorAttestationResponseValidator->check(
+                $authenticatorAttestationResponse,
+                $options,
+                $request->getUri()->getHost()
+            );
+
+            $login->setAndSaveSessionData('tx_webauthn_register', null);
+
+            $publicKeyCredentialSourceRepository->saveNamedCredentialSource(
                 $name,
                 $publicKeyCredentialSource
             );
@@ -88,42 +187,68 @@ class CredentialsService
         return false;
     }
 
+    /**
+     * Create options for authenticating a known device
+     *
+     * @param FrontendUserAuthentication|BackendUserAuthentication $login
+     * @param MfaProviderPropertyManager $propertyManager
+     * @return PublicKeyCredentialRequestOptions
+     * @throws \Exception
+     */
     public function createCredentialRequestOptions(FrontendUserAuthentication|BackendUserAuthentication $login, MfaProviderPropertyManager $propertyManager): PublicKeyCredentialRequestOptions
     {
         $userEntity = $this->createUser($login);
-        $repository = new CredentialsRepository($propertyManager);
-        $credentialSources = $repository->findAllForUserEntity($userEntity);
+        $publicKeyCredentialSourceRepository = new CredentialsRepository($propertyManager);
+        $registeredAuthenticators = $publicKeyCredentialSourceRepository->findAllForUserEntity($userEntity);
+
         $allowedCredentials = array_map(
-            fn (PublicKeyCredentialSource $credential) => $credential->getPublicKeyCredentialDescriptor(),
-            $credentialSources
+            static fn (PublicKeyCredentialSource $credential): PublicKeyCredentialDescriptor => $credential->getPublicKeyCredentialDescriptor(),
+            $registeredAuthenticators
         );
 
-        $options = $this->createServer($repository)->generatePublicKeyCredentialRequestOptions(
-            PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_DISCOURAGED,
-            $allowedCredentials
-        );
+        $publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions::create(random_bytes(32))
+            ->allowCredentials(...$allowedCredentials);
 
-        $login->setAndSaveSessionData('tx_webauthn_auth', $options->jsonSerialize());
+        $login->setAndSaveSessionData('tx_webauthn_auth', $publicKeyCredentialRequestOptions->jsonSerialize());
 
-        return $options;
+        return $publicKeyCredentialRequestOptions;
     }
 
+    /**
+     * Verify an authentication request
+     *
+     * @param Reqest $request
+     * @param FrontendUserAuthentication|BackendUserAuthentication $login
+     * @param MfaProviderPropertyManager $propertyManager
+     * @return bool
+     */
     public function verifyAuth(Reqest $request, FrontendUserAuthentication|BackendUserAuthentication $login, MfaProviderPropertyManager $propertyManager): bool
     {
         try {
-            /** @var PublicKeyCredentialRequestOptions $options */
-            $options = PublicKeyCredentialRequestOptions::createFromArray($login->getSessionData('tx_webauthn_auth'));
+            $publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions::createFromArray($login->getSessionData('tx_webauthn_auth'));
             $login->setAndSaveSessionData('tx_webauthn_auth', null);
 
-            $userEntity = $this->createUser($login);
-            $repository = new CredentialsRepository($propertyManager);
-            $server = $this->createServer($repository);
+            $publicKeyCredentialSourceRepository = new CredentialsRepository($propertyManager);
+            $authenticatorAssertionResponseValidator = AuthenticatorAssertionResponseValidator::create(
+                $publicKeyCredentialSourceRepository,
+                null,
+                ExtensionOutputCheckerHandler::create(),
+                $this->getAlgorithmManager()
+            );
+            $publicKeyCredentialLoader = $this->getPublicKeyCredentailLoader();
+            $publicKeyCredential = $publicKeyCredentialLoader->load($request->getParsedBody()['credential'] ?? '');
+            $authenticatorAssertionResponse = $publicKeyCredential->getResponse();
 
-            $server->loadAndCheckAssertionResponse(
-                $request->getParsedBody()['credential'],
-                $options,
-                $userEntity,
-                $request
+            if (!$authenticatorAssertionResponse instanceof AuthenticatorAssertionResponse) {
+                return false;
+            }
+
+            $authenticatorAssertionResponseValidator->check(
+                $publicKeyCredential->getRawId(),
+                $authenticatorAssertionResponse,
+                $publicKeyCredentialRequestOptions,
+                $request->getUri()->getHost(),
+                $this->createUser($login)->getId(),
             );
 
             return true;
@@ -132,6 +257,48 @@ class CredentialsService
         }
 
         return false;
+    }
+
+    /**
+     * @return AlgorithmManager
+     */
+    protected function getAlgorithmManager(): AlgorithmManager
+    {
+        $this->algorithmManager ??= AlgorithmManager::create()->add(
+            ES256::create(),
+            ES256K::create(),
+            ES384::create(),
+            ES512::create(),
+            RS256::create(),
+            RS384::create(),
+            RS512::create(),
+            PS256::create(),
+            PS384::create(),
+            PS512::create(),
+            Ed256::create(),
+            Ed512::create(),
+        );
+
+        return $this->algorithmManager;
+    }
+
+    /**
+     * @return AttestationStatementSupportManager
+     */
+    protected function getAttestationStatementSupportManager(): AttestationStatementSupportManager
+    {
+        if (!$this->attestationStatementSupportManager) {
+            $this->attestationStatementSupportManager = AttestationStatementSupportManager::create();
+            $this->attestationStatementSupportManager->add(NoneAttestationStatementSupport::create());
+            $this->attestationStatementSupportManager->add(AndroidKeyAttestationStatementSupport::create());
+            $this->attestationStatementSupportManager->add(AndroidSafetyNetAttestationStatementSupport::create());
+            $this->attestationStatementSupportManager->add(AppleAttestationStatementSupport::create());
+            $this->attestationStatementSupportManager->add(FidoU2FAttestationStatementSupport::create());
+            $this->attestationStatementSupportManager->add(PackedAttestationStatementSupport::create($this->getAlgorithmManager()));
+            $this->attestationStatementSupportManager->add(TPMAttestationStatementSupport::create());
+        }
+
+        return $this->attestationStatementSupportManager;
     }
 
     private function createRelayingParty(): PublicKeyCredentialRpEntity
@@ -149,8 +316,6 @@ class CredentialsService
             if (strlen($appID) > 250 || str_contains($appID, '/') || !filter_var($appID, FILTER_VALIDATE_DOMAIN)) {
                 throw new \ValueError('Invalid app ID, must be a domain');
             }
-
-            $appID = 'https://' . $appID;
         } else {
             $appID = null;
         }
@@ -161,7 +326,9 @@ class CredentialsService
             $appIconPath = PathUtility::getAbsoluteWebPath($appIcon);
 
             if ($appIconPath) {
-                $appIcon = GeneralUtility::locationHeaderUrl($appIconPath);
+                $mime = mime_content_type($appIconPath);
+                $content = file_get_contents($appIconPath);
+                $appIcon = 'data:' . $mime . ';base64,' . base64_encode($content);
             } else {
                 throw new \ValueError('App icon path cannot be resolved');
             }
@@ -169,7 +336,7 @@ class CredentialsService
             $appIcon = null;
         }
 
-        return new PublicKeyCredentialRpEntity(
+        return PublicKeyCredentialRpEntity::create(
             $name,
             $appID,
             $appIcon
@@ -179,20 +346,24 @@ class CredentialsService
     private function createUser(FrontendUserAuthentication|BackendUserAuthentication $user): PublicKeyCredentialUserEntity
     {
         $name = (string)$user->user[$user->username_column];
-        $id = (int)$user->user[$user->userid_column];
+        $id = (int)$user->getSession()->getUserId();
         $displayName = trim((string)($user->user['realName'] ?? $user->user['name'] ?? '')) ?: $name;
 
-        return new PublicKeyCredentialUserEntity(
+        return PublicKeyCredentialUserEntity::create(
             $name,
             dechex($id),
             $displayName
         );
     }
 
-    private function createServer(CredentialsRepository $repository): Server
+    private function getPublicKeyCredentailLoader(): PublicKeyCredentialLoader
     {
-        $rp = $this->createRelayingParty();
+        $attestationObjectLoader = AttestationObjectLoader::create($this->getAttestationStatementSupportManager());
+        $attestationObjectLoader->setLogger($this->logger);
 
-        return (new Server($rp, $repository))->setLogger($this->logger);
+        $publicKeyCredentailLoader = PublicKeyCredentialLoader::create($attestationObjectLoader);
+        $publicKeyCredentailLoader->setLogger($this->logger);
+
+        return $publicKeyCredentailLoader;
     }
 }
