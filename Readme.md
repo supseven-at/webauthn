@@ -83,8 +83,10 @@ Includes the [cbor-js](https://github.com/paroga/cbor-js) library, licensed
 under the MIT license. See
 <https://github.com/paroga/cbor-js/blob/master/LICENSE> for details.
 
-Uses the [webauth-lib](https://webauthn-doc.spomky-labs.com/) library, and
-adapted code from
-[webauthn-helper](https://github.com/web-auth/webauthn-helper)
+Uses the [webauth-lib](https://webauthn-doc.spomky-labs.com/) library
 licensed under the MIT license, see
+<https://github.com/web-auth/webauthn-lib> for details.
+
+The client JS uses the [simlewebauthn/browser](https://simplewebauthn.dev/docs/packages/browser)
+library licensed under the MIT license, see
 <https://github.com/web-auth/webauthn-lib> for details.

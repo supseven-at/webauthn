@@ -23,6 +23,9 @@ clean: ## Remove built files and dependencies
 .PHONY: release
 release: release/webauthn.zip release/changelog.md release/ter_notes.md ## Create release artifact
 
+.PHONY: frontend
+frontend: Resources/Public/JavaScript/Auth.js Resources/Public/JavaScript/Edit.js Resources/Public/JavaScript/Setup.js
+
 ##
 ## Sub targets called by entry points
 ##
@@ -33,7 +36,16 @@ lint-php: vendor/autoload.php ## Lint PHP code style
 
 .PHONY: lint-frontend
 lint-frontend: node_modules/.yarn-integrity ## Lint frontend code style
-	./node_modules/.bin/prettier --check . '!vendor' '!composer.lock'
+	./node_modules/.bin/prettier --check . '!vendor' '!composer.lock' '!Resources/Public/JavaScript'
+
+Resources/Public/JavaScript/Auth.js: node_modules/.yarn-integrity res/Auth.js
+	./node_modules/.bin/esbuild --outfile=Resources/Public/JavaScript/Auth.js --bundle --minify --platform=browser res/Auth.js
+
+Resources/Public/JavaScript/Edit.js: node_modules/.yarn-integrity res/Edit.js
+	./node_modules/.bin/esbuild --outfile=Resources/Public/JavaScript/Edit.js --bundle --minify --platform=browser res/Edit.js
+
+Resources/Public/JavaScript/Setup.js: node_modules/.yarn-integrity res/Setup.js
+	./node_modules/.bin/esbuild --outfile=Resources/Public/JavaScript/Setup.js --bundle --minify --platform=browser res/Setup.js
 
 .PHONY: fix-php
 fix-php: vendor/autoload.php ## Fix PHP code style
@@ -41,7 +53,7 @@ fix-php: vendor/autoload.php ## Fix PHP code style
 
 .PHONY: fix-frontend
 fix-frontend: node_modules/.yarn-integrity ## Fix frontend code style
-	./node_modules/.bin/prettier --write . '!vendor' '!composer.lock'
+	./node_modules/.bin/prettier --write . '!vendor' '!composer.lock' '!Resources/Public/JavaScript'
 
 release/changelog.md:
 	mkdir -p release
