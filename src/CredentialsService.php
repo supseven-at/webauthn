@@ -22,7 +22,6 @@ use Psr\Http\Message\ServerRequestInterface as Reqest;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use Webauthn\AttestationStatement\AndroidKeyAttestationStatementSupport;
@@ -48,7 +47,6 @@ use Webauthn\PublicKeyCredentialRequestOptions;
 use Webauthn\PublicKeyCredentialRpEntity;
 use Webauthn\PublicKeyCredentialSource;
 use Webauthn\PublicKeyCredentialUserEntity;
-use Webauthn\TokenBinding\IgnoreTokenBindingHandler;
 
 /**
  * Service offering a single interface to all needed Webauthn objects and functions
