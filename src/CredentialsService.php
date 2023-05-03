@@ -22,7 +22,7 @@ use Psr\Http\Message\ServerRequestInterface as Reqest;
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Authentication\Mfa\MfaProviderPropertyManager;
-use TYPO3\CMS\Core\Utility\PathUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 use Webauthn\AttestationStatement\AndroidKeyAttestationStatementSupport;
 use Webauthn\AttestationStatement\AndroidSafetyNetAttestationStatementSupport;
@@ -321,9 +321,9 @@ class CredentialsService
         $appIcon = (string)($extConf['icon'] ?? $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['backend']['loginLogo'] ?? '');
 
         if ($appIcon) {
-            $appIconPath = PathUtility::getAbsoluteWebPath($appIcon);
+            $appIconPath = GeneralUtility::getFileAbsFileName($appIcon);
 
-            if ($appIconPath) {
+            if ($appIconPath && is_file($appIconPath)) {
                 $mime = mime_content_type($appIconPath);
                 $content = file_get_contents($appIconPath);
                 $appIcon = 'data:' . $mime . ';base64,' . base64_encode($content);
