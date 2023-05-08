@@ -207,6 +207,9 @@ class CredentialsService
         $publicKeyCredentialRequestOptions = PublicKeyCredentialRequestOptions::create(random_bytes(32))
             ->allowCredentials(...$allowedCredentials);
 
+        // Avoid additional PIN code for attached devices
+        $publicKeyCredentialRequestOptions->setUserVerification(PublicKeyCredentialRequestOptions::USER_VERIFICATION_REQUIREMENT_DISCOURAGED);
+
         $login->setAndSaveSessionData('tx_webauthn_auth', $publicKeyCredentialRequestOptions->jsonSerialize());
 
         return $publicKeyCredentialRequestOptions;
