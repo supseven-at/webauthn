@@ -51,13 +51,13 @@ with the ID of the app. Must be a domain name. If none given, the browser will
 use the domain used during device registration. Should be set to the "main"
 or "primary" domain if the TYPO3 backend is available under several domains.
 Otherwise a registered device can only be used under the domain it was
-registerd with.
+registered with.
 
 `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['webauthn']['icon']`: String
-with a path to an icon. If none is set, webauth will try the value of the
+with a path to an icon. If none is set, webauthn will try the value of the
 setting `$GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['backend']['loginLogo']`.
 No icon will be used if neither settings are set.
-If the icon is actually displayed, depends on the device capabilties, eg.:
+If the icon is actually displayed, depends on the device capabilities, eg.:
 a dongle without a display cannot show it, a smartphone might.
 
 ### User configuration
@@ -68,11 +68,26 @@ user individually.
 If a user has a "real name" in the be_user record, this name will be
 displayed, otherwise the "username" will be used.
 
-## License
+## Alternatives
+
+Extension [mfa_webauthn](https://github.com/bnf/mfa_webauthn) also provides
+webauthn support for MFA. The main difference is that `EXT:mfa_webauthn`
+offers a more *guided* UI at the expense of less supported devices. This
+extensions offers more freedom in choice of devices, but may confuse less
+experienced users with its options.
+
+As always: in case of doubt, just try them both and choose the one that best
+matches your requirements.
+
+## Legal
+
+### License
 
 The software is licensed under the GPLv2 or, at your options, a later
 version of this license. See [LICENSE](./LICENSE) or
 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt>.
+
+### Mentions
 
 The icon is the official webauthn icon, provided by the
 [bootstrap icons](https://icons.getbootstrap.com/)
