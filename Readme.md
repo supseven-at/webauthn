@@ -72,7 +72,7 @@ displayed, otherwise the "username" will be used.
 
 Extension [mfa_webauthn](https://github.com/bnf/mfa_webauthn) also provides
 webauthn support for MFA. The main difference is that `EXT:mfa_webauthn`
-offers a more *guided* UI at the expense of less supported devices. This
+offers a more _guided_ UI at the expense of less supported devices. This
 extensions offers more freedom in choice of devices, but may confuse less
 experienced users with its options.
 
