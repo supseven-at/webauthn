@@ -94,10 +94,6 @@ The icon is the official webauthn icon, provided by the
 project which uses the MIT license. See
 <https://github.com/twbs/icons/blob/main/LICENSE.md> for details.
 
-Includes the [cbor-js](https://github.com/paroga/cbor-js) library, licensed
-under the MIT license. See
-<https://github.com/paroga/cbor-js/blob/master/LICENSE> for details.
-
 Uses the [webauth-lib](https://webauthn-doc.spomky-labs.com/) library
 licensed under the MIT license, see
 <https://github.com/web-auth/webauthn-lib> for details.
